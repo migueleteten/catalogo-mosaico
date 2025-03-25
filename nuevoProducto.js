@@ -367,12 +367,18 @@ async function detectarUrlMosaico(event) {
         if (!urlOriginal) return;
 
         try {
-            const response = await fetch(urlOriginal);
-            const blob = await response.blob();
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = urlOriginal;
 
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const base64 = reader.result.split(',')[1];
+            img.onload = async () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+
+                const base64 = canvas.toDataURL("image/jpeg").split(",")[1];
                 try {
                     const nuevaURL = await subirImagenIbb(base64, generarNombreImagen());
                     if (nuevaURL && !urlsMosaico.includes(nuevaURL)) {
@@ -382,18 +388,17 @@ async function detectarUrlMosaico(event) {
                         actualizarOpcionesTipoImagen();
                     }
                 } catch (e) {
-                    console.error("❌ Error al subir a ImgBB:", e);
-                    alert("No se pudo subir la imagen a ImgBB." + (e.message || e));
+                    alert("❌ Error al subir imagen a ImgBB");
+                    console.error(e);
                 }
             };
-            reader.onerror = () => {
-                console.error("❌ Error al leer imagen original");
-                alert("No se pudo leer la imagen para subirla.");
+
+            img.onerror = () => {
+                alert("❌ No se pudo cargar la imagen (posible CORS).");
             };
-            reader.readAsDataURL(blob);
         } catch (error) {
-            console.error("❌ Error al acceder a la URL original:", error);
-            alert("No se pudo acceder a la imagen. Asegúrate de que el enlace es válido." + error.message || error);
+            alert("❌ Error inesperado al procesar la imagen.");
+            console.error(error);
         }
     }
 }
