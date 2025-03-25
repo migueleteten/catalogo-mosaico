@@ -378,6 +378,7 @@ function mostrarImagenMosaico(url) {
     const div = document.createElement("div");
 
     const img = document.createElement("img");
+    img.crossOrigin = "anonymous";
     img.src = url;
     img.alt = "Imagen del mosaico";
     img.width = 80;
