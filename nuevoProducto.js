@@ -383,7 +383,7 @@ async function detectarUrlMosaico(event) {
                     }
                 } catch (e) {
                     console.error("❌ Error al subir a ImgBB:", e);
-                    alert("No se pudo subir la imagen a ImgBB.");
+                    alert("No se pudo subir la imagen a ImgBB." + (e.message || e));
                 }
             };
             reader.onerror = () => {
