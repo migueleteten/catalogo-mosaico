@@ -367,38 +367,19 @@ async function detectarUrlMosaico(event) {
         if (!urlOriginal) return;
 
         try {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = urlOriginal;
+            const nombreImagen = generarNombreImagen();
+            const nuevaUrl = await subirImagenIbb(urlOriginal, nombreImagen);
+            if (!nuevaUrl) throw new Error("URL vacía");
 
-            img.onload = async () => {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0);
-
-                const base64 = canvas.toDataURL("image/jpeg").split(",")[1];
-                try {
-                    const nuevaURL = await subirImagenIbb(base64, generarNombreImagen());
-                    if (nuevaURL && !urlsMosaico.includes(nuevaURL)) {
-                        urlsMosaico.push(nuevaURL);
-                        mostrarImagenMosaico(nuevaURL);
-                        input.value = "";
-                        actualizarOpcionesTipoImagen();
-                    }
-                } catch (e) {
-                    alert("❌ Error al subir imagen a ImgBB");
-                    console.error(e);
-                }
-            };
-
-            img.onerror = () => {
-                alert("❌ No se pudo cargar la imagen (posible CORS).");
-            };
-        } catch (error) {
-            alert("❌ Error inesperado al procesar la imagen.");
-            console.error(error);
+            if (!urlsMosaico.includes(nuevaUrl)) {
+                urlsMosaico.push(nuevaUrl);
+                mostrarImagenMosaico(nuevaUrl);
+                input.value = "";
+                actualizarOpcionesTipoImagen();
+            }
+        } catch (e) {
+            alert("❌ No se pudo subir la imagen a ImgBB.");
+            console.error("❌ Error al subir a ImgBB:", e);
         }
     }
 }
