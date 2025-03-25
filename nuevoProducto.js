@@ -588,18 +588,23 @@ async function capturarRecortesTV() {
 
     const canvasOriginal = await html2canvas(contenedor, {
         useCORS: true,
-        scale: 2
+        scale: 3
     });
 
     const result = {};
 
+    const escala = 6; // 2px por cm
     const medidas = [
         { nombre: "40", w: 177, h: 100 },
         { nombre: "50", w: 221, h: 125 },
         { nombre: "55", w: 244, h: 137 },
         { nombre: "65", w: 288, h: 162 },
         { nombre: "75", w: 332, h: 187 }
-    ];
+    ].map(({ nombre, w, h }) => ({
+        nombre,
+        w: Math.round(w * escala),
+        h: Math.round(h * escala)
+    }));
 
     medidas.forEach(({ nombre, w, h }) => {
         const cropCanvas = document.createElement("canvas");
