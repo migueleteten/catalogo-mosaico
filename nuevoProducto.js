@@ -620,8 +620,8 @@ async function capturarRecortesTV() {
 
         const ctx = cropCanvas.getContext("2d");
 
-        const cx = canvasOriginal.width / 2 - cropW / 2;
-        const cy = canvasOriginal.height / 2 - cropH / 2;
+        const cx = 0;
+        const cy = 0;
 
         ctx.drawImage(canvasOriginal, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
 
