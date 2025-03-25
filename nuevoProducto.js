@@ -359,16 +359,41 @@ function actualizarOpcionesDisposicion() {
 
 let urlsMosaico = [];
 
-function detectarUrlMosaico(event) {
+async function detectarUrlMosaico(event) {
     if (event.key === "Enter") {
         event.preventDefault();
         const input = event.target;
-        const url = input.value.trim();
-        if (url && !urlsMosaico.includes(url)) {
-            urlsMosaico.push(url);
-            mostrarImagenMosaico(url);
-            input.value = "";
-            actualizarOpcionesTipoImagen();
+        const urlOriginal = input.value.trim();
+        if (!urlOriginal) return;
+
+        try {
+            const response = await fetch(urlOriginal);
+            const blob = await response.blob();
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64 = reader.result.split(',')[1];
+                try {
+                    const nuevaURL = await subirImagenIbb(base64, generarNombreImagen());
+                    if (nuevaURL && !urlsMosaico.includes(nuevaURL)) {
+                        urlsMosaico.push(nuevaURL);
+                        mostrarImagenMosaico(nuevaURL);
+                        input.value = "";
+                        actualizarOpcionesTipoImagen();
+                    }
+                } catch (e) {
+                    console.error("❌ Error al subir a ImgBB:", e);
+                    alert("No se pudo subir la imagen a ImgBB.");
+                }
+            };
+            reader.onerror = () => {
+                console.error("❌ Error al leer imagen original");
+                alert("No se pudo leer la imagen para subirla.");
+            };
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error("❌ Error al acceder a la URL original:", error);
+            alert("No se pudo acceder a la imagen. Asegúrate de que el enlace es válido.");
         }
     }
 }
