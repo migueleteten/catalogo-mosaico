@@ -588,42 +588,50 @@ async function capturarRecortesTV() {
 
     const canvasOriginal = await html2canvas(contenedor, {
         useCORS: true,
-        scale: 3
+        scale: 3 // súper nítido
     });
+
+    const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
+    const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
+
+    // Calcular ancho total del mosaico en cm
+    const totalCols = Math.ceil(200 / anchoBaldosa); // o usar el mismo cálculo que hiciste antes
+    const anchoCmReal = totalCols * anchoBaldosa;
+
+    const escalaReal = canvasOriginal.width / anchoCmReal; // PX por CM
+
+    const medidas = [
+        { nombre: "40", w: 89, h: 50 },
+        { nombre: "50", w: 111, h: 63 },
+        { nombre: "55", w: 122, h: 69 },
+        { nombre: "65", w: 143.9, h: 80.9 },
+        { nombre: "75", w: 166, h: 93.4 }
+    ];
 
     const result = {};
 
-    const escala = 6; // 2px por cm
-    const medidas = [
-        { nombre: "40", w: 177, h: 100 },
-        { nombre: "50", w: 221, h: 125 },
-        { nombre: "55", w: 244, h: 137 },
-        { nombre: "65", w: 288, h: 162 },
-        { nombre: "75", w: 332, h: 187 }
-    ].map(({ nombre, w, h }) => ({
-        nombre,
-        w: Math.round(w * escala),
-        h: Math.round(h * escala)
-    }));
-
     medidas.forEach(({ nombre, w, h }) => {
         const cropCanvas = document.createElement("canvas");
-        cropCanvas.width = w;
-        cropCanvas.height = h;
+        const cropW = Math.round(w * escalaReal);
+        const cropH = Math.round(h * escalaReal);
+
+        cropCanvas.width = cropW;
+        cropCanvas.height = cropH;
 
         const ctx = cropCanvas.getContext("2d");
-        const cx = canvasOriginal.width / 2 - w / 2;
-        const cy = canvasOriginal.height / 2 - h / 2;
 
-        ctx.drawImage(canvasOriginal, cx, cy, w, h, 0, 0, w, h);
+        const cx = canvasOriginal.width / 2 - cropW / 2;
+        const cy = canvasOriginal.height / 2 - cropH / 2;
+
+        ctx.drawImage(canvasOriginal, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
 
         result[`TV${nombre}`] = cropCanvas.toDataURL("image/png");
     });
 
-    // También guardamos el mosaico completo
+    // Imagen del mosaico entero
     result.mosaicoCompleto = canvasOriginal.toDataURL("image/png");
 
-    return result; // contiene las 6 imágenes: 5 TVs + completo
+    return result;
 }
 
 async function subirRecortesTVYGuardar(codigoProducto) {
