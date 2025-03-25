@@ -74,8 +74,16 @@ async function procesarImagenesArrastradas(event) {
 async function subirImagenIbb(imageData, fileName) {
     const apiKey = "3717e2228df458827cb7e06855655ce7";
     const formData = new FormData();
+
     formData.append("key", apiKey);
-    formData.append("image", imageData);
+
+    // ⚠️ Si viene como base64 con prefijo "data:image/png;base64,..."
+    if (imageData.startsWith("data:image")) {
+        formData.append("image", imageData.split(",")[1]);
+    } else {
+        formData.append("image", imageData); // se asume URL o base64 puro
+    }
+
     formData.append("name", fileName);
 
     const response = await fetch("https://api.imgbb.com/1/upload", {
@@ -85,7 +93,7 @@ async function subirImagenIbb(imageData, fileName) {
 
     const data = await response.json();
     if (!data.success) throw new Error("Error al subir la imagen");
-    return data.success ? data.data.url : null;  // ✅ Ahora devuelve la URL real
+    return data.data.url;
 }
 
 // 🏷️ 8️⃣ Generar nombre camuflado para imágenes
@@ -205,29 +213,46 @@ function configurarSugerencias(input, sugerencias) {
 }
 
 async function registrarProducto() {
-    // Asegurarnos de que todas las imágenes han sido subidas
     if (uploadedImages.length === 0) {
         alert("❌ Debes subir al menos una imagen antes de registrar el producto.");
         return;
     }
 
-    // Obtener el índice de la imagen principal
-    let fotoPrincipalIndex = uploadedImages.length > 0 ? 1 : ""; // Por defecto, la primera imagen
+    let fotoPrincipalIndex = uploadedImages.length > 0 ? 1 : "";
     let selectedImage = document.querySelector(".image-preview img.selected");
     if (selectedImage) {
         fotoPrincipalIndex = uploadedImages.indexOf(selectedImage.src) + 1;
     }
 
+    // Subida opcional del mosaico y recortes
+    let urlsMosaico = null;
+    const mosaicoActivado = document.getElementById("activar-mosaico").checked;
+    const codigoProducto = document.getElementById("codigo").value.trim();
+
+    if (mosaicoActivado) {
+        try {
+            urlsMosaico = await subirRecortesTVYGuardar(codigoProducto);
+            if (!urlsMosaico) {
+                alert("❌ Falló la subida del mosaico. No se puede registrar el producto.");
+                return;
+            }
+        } catch (error) {
+            console.error("❌ Error subiendo mosaico:", error);
+            alert("❌ Falló la subida del mosaico.");
+            return;
+        }
+    }
+
     let formData = {
-        codigo: document.getElementById("codigo").value.trim(),
+        codigo: codigoProducto,
         tipo: document.getElementById("tipo-producto").value.trim(),
         marca: document.getElementById("marca").value.trim(),
         producto: document.getElementById("producto").value.trim(),
         pvp: parseFloat(document.getElementById("pvp").value),
-        dto: parseFloat(document.getElementById("dto").value) / 100, // Convertir a decimal
+        dto: parseFloat(document.getElementById("dto").value) / 100,
         url: document.getElementById("product-url").value.trim(),
-        fotos: JSON.stringify(uploadedImages), // Ahora sí almacena las imágenes correctas
-        fotoPrincipal: fotoPrincipalIndex, // Índice de la imagen principal
+        fotos: JSON.stringify(uploadedImages),
+        fotoPrincipal: fotoPrincipalIndex,
         preferente: document.getElementById("preferente").checked,
         camuflado: document.getElementById("camuflado").checked,
         nombreAlternativo: document.getElementById("camuflado").checked ? document.getElementById("nombre-alternativo").value : "",
@@ -238,7 +263,17 @@ async function registrarProducto() {
         dato3: document.getElementById("dato3").value.trim(),
         valor3: document.getElementById("valor3").value.trim(),
         dato4: document.getElementById("dato4").value.trim(),
-        valor4: document.getElementById("valor4").value.trim()
+        valor4: document.getElementById("valor4").value.trim(),
+        urlMosaico: urlsMosaico ? urlsMosaico.mosaicoCompleto : "",
+        urlImagenesVD: urlsMosaico
+            ? JSON.stringify({
+                  TV40: urlsMosaico.TV40,
+                  TV50: urlsMosaico.TV50,
+                  TV55: urlsMosaico.TV55,
+                  TV65: urlsMosaico.TV65,
+                  TV75: urlsMosaico.TV75
+              })
+            : ""
     };
 
     console.log("📤 Enviando producto a Apps Script:", formData);
@@ -246,8 +281,8 @@ async function registrarProducto() {
     google.script.run.withSuccessHandler(response => {
         alert(response);
         document.getElementById("product-form").reset();
-        uploadedImages = []; // Limpiar lista de imágenes después del registro
-        document.getElementById("image-preview").innerHTML = ""; // Borrar miniaturas
+        uploadedImages = [];
+        document.getElementById("image-preview").innerHTML = "";
         document.getElementById("nombre-alternativo-container").style.display = "none";
     }).guardarProducto(formData);
 }
@@ -529,6 +564,71 @@ function generarMosaico() {
     }
 
     console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, rows, cols });
+}
+
+async function capturarRecortesTV() {
+    const contenedor = document.getElementById("mosaico-render");
+
+    if (!contenedor || contenedor.children.length === 0) {
+        alert("❌ No hay mosaico generado para capturar.");
+        return;
+    }
+
+    const canvasOriginal = await html2canvas(contenedor, {
+        useCORS: true,
+        scale: 2
+    });
+
+    const result = {};
+
+    const medidas = [
+        { nombre: "40", w: 177, h: 100 },
+        { nombre: "50", w: 221, h: 125 },
+        { nombre: "55", w: 244, h: 137 },
+        { nombre: "65", w: 288, h: 162 },
+        { nombre: "75", w: 332, h: 187 }
+    ];
+
+    medidas.forEach(({ nombre, w, h }) => {
+        const cropCanvas = document.createElement("canvas");
+        cropCanvas.width = w;
+        cropCanvas.height = h;
+
+        const ctx = cropCanvas.getContext("2d");
+        const cx = canvasOriginal.width / 2 - w / 2;
+        const cy = canvasOriginal.height / 2 - h / 2;
+
+        ctx.drawImage(canvasOriginal, cx, cy, w, h, 0, 0, w, h);
+
+        result[`TV${nombre}`] = cropCanvas.toDataURL("image/png");
+    });
+
+    // También guardamos el mosaico completo
+    result.mosaicoCompleto = canvasOriginal.toDataURL("image/png");
+
+    return result; // contiene las 6 imágenes: 5 TVs + completo
+}
+
+async function subirRecortesTVYGuardar(codigoProducto) {
+    const imagenes = await capturarRecortesTV();
+    if (!imagenes) return;
+
+    const urlsSubidas = {};
+
+    for (const key in imagenes) {
+        const nombre = `MOSAICO_${key}_${codigoProducto}`;
+        try {
+            const url = await subirImagenIbb(imagenes[key], nombre);
+            urlsSubidas[key] = url;
+        } catch (error) {
+            console.error(`❌ Error subiendo ${key}:`, error);
+            alert(`❌ Falló la subida de ${key}`);
+            return;
+        }
+    }
+
+    console.log("✅ Subidas completadas:", urlsSubidas);
+    return urlsSubidas;
 }
 
 cargarTiposProductos();
