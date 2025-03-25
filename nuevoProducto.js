@@ -393,7 +393,7 @@ async function detectarUrlMosaico(event) {
             reader.readAsDataURL(blob);
         } catch (error) {
             console.error("❌ Error al acceder a la URL original:", error);
-            alert("No se pudo acceder a la imagen. Asegúrate de que el enlace es válido.");
+            alert("No se pudo acceder a la imagen. Asegúrate de que el enlace es válido." + error.message || error);
         }
     }
 }
