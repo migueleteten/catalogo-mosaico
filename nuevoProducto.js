@@ -280,6 +280,11 @@ async function registrarProducto() {
 
     google.script.run.withSuccessHandler(response => {
         alert(response);
+
+        // ✅ Llamada en segundo plano
+        google.script.run.generarCatalogoJSON();
+
+        // ✅ Limpieza visual
         document.getElementById("product-form").reset();
         uploadedImages = [];
         document.getElementById("image-preview").innerHTML = "";
