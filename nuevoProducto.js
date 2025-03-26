@@ -289,6 +289,9 @@ async function registrarProducto() {
         uploadedImages = [];
         document.getElementById("image-preview").innerHTML = "";
         document.getElementById("nombre-alternativo-container").style.display = "none";
+        document.getElementById("imagenes-mosaico").innerHTML = "";
+        document.getElementById("mosaico-render").innerHTML = "";
+        document.getElementById("mosaico-config").style.display = "none";
     }).guardarProducto(formData);
 }
 
@@ -517,6 +520,7 @@ function generarMosaico() {
 
             // MODO MADERA con desplazamientos 1/3 y 2/3 y ajuste de columnas
             if (tipoDisposicion === "madera") {
+
                 for (let y = 0; y < filas; y++) {
                     const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
                     const desplazamientoPx = desplazamientoFactor * anchoPx;
