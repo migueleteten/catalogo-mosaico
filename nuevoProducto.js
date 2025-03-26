@@ -437,6 +437,8 @@ function actualizarOpcionesTipoImagen() {
 function generarMosaico() {
     const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
     const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
+    const anchoPx = anchoBaldosa * 2;
+    const altoPx = altoBaldosa * 2;
     const tipoImagen = document.getElementById("tipo-imagen-mosaico").value;
     const tipoDisposicion = document.getElementById("tipo-disposicion").value;
     const patronGiro = document.getElementById("patron-giro").value || null;
@@ -459,13 +461,18 @@ function generarMosaico() {
     // Calcular dimensiones necesarias para cubrir 200x200 cm
     const minAnchoCm = 200;
     const minAltoCm = 200;
-    const cols = tipoImagen === "mosaico" ? repX : Math.ceil(minAnchoCm / anchoBaldosa);
-    const rows = tipoImagen === "mosaico" ? repY : Math.ceil(minAltoCm / altoBaldosa);
+    const columnas = tipoImagen === "mosaico" ? repX : Math.ceil(minAnchoCm / anchoBaldosa);
+    const filas = tipoImagen === "mosaico" ? repY : Math.ceil(minAltoCm / altoBaldosa);
 
-    contenedor.style.gridTemplateColumns = `repeat(${cols}, ${anchoBaldosa * 2}px)`;
+    contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${anchoBaldosa * 2}px)`;
+    contenedor.innerHTML = "";
+    contenedor.style.position = "relative";
+    contenedor.style.width = `${(columnas * anchoPx) + columnas - 1}px`;
+    contenedor.style.height = `${(filas * altoPx) + filas - 1}px`;
+    contenedor.style.overflow = "hidden";
 
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < filas; y++) {
+        for (let x = 0; x < columnas; x++) {
             const div = document.createElement("div");
             const img = document.createElement("img");
 
@@ -474,7 +481,7 @@ function generarMosaico() {
             if (tipoImagen === "pieza") {
                 url = urlsMosaico[0];
             } else if (tipoImagen === "varias") {
-                url = urlsMosaico[(x + y * cols) % urlsMosaico.length];
+                url = urlsMosaico[(x + y * columnas) % urlsMosaico.length];
             } else if (tipoImagen === "mosaico") {
                 url = urlsMosaico[0];
             }
@@ -510,19 +517,6 @@ function generarMosaico() {
 
             // MODO MADERA con desplazamientos 1/3 y 2/3 y ajuste de columnas
             if (tipoDisposicion === "madera") {
-                const anchoPx = anchoBaldosa * 2;
-                const altoPx = altoBaldosa * 2;
-            
-                const filas = Math.ceil(200 / altoBaldosa);
-                const columnas = Math.ceil(200 / anchoBaldosa);
-            
-                const contenedor = document.getElementById("mosaico-render");
-                contenedor.innerHTML = "";
-                contenedor.style.position = "relative";
-                contenedor.style.width = `${(columnas * anchoPx) + columnas - 1}px`;
-                contenedor.style.height = `${(filas * altoPx) + filas - 1}px`;
-                contenedor.style.overflow = "hidden";
-            
                 for (let y = 0; y < filas; y++) {
                     const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
                     const desplazamientoPx = desplazamientoFactor * anchoPx;
@@ -580,7 +574,7 @@ function generarMosaico() {
         }
     }
 
-    console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, rows, cols });
+    console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
 }
 
 async function capturarRecortesTV() {
