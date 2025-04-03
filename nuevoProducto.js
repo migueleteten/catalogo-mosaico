@@ -577,7 +577,6 @@ async function generarMosaico() {
                 }
             
                 console.log("✅ Mosaico tipo madera generado");
-                return;
             }
 
             div.appendChild(img);
