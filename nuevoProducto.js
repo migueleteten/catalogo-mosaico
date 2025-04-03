@@ -443,6 +443,7 @@ function actualizarOpcionesTipoImagen() {
 async function generarMosaico() {
     console.log("🚀 Se ha pulsado 'Generar Mosaico'");
     console.log("🔍 ¿Existe el select?", document.getElementById("tipo-normal-map"));
+
     const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
     const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
     const anchoPx = anchoBaldosa * 2;
@@ -454,7 +455,9 @@ async function generarMosaico() {
     const repY = parseInt(document.getElementById("rep-y").value) || 0;
 
     const contenedor = document.getElementById("mosaico-render");
-    contenedor.innerHTML = ""; // Limpiar anterior
+    contenedor.innerHTML = "";
+
+    let esMadera = false; // 🆕
 
     if (!urlsMosaico.length) {
         console.warn("⚠️ No hay imágenes en urlsMosaico:", urlsMosaico);
@@ -468,129 +471,121 @@ async function generarMosaico() {
         return;
     }
 
-    // Calcular dimensiones necesarias para cubrir 200x200 cm
     const minAnchoCm = 200;
     const minAltoCm = 200;
     const columnas = tipoImagen === "mosaico" ? repX : Math.ceil(minAnchoCm / anchoBaldosa);
     const filas = tipoImagen === "mosaico" ? repY : Math.ceil(minAltoCm / altoBaldosa);
 
-    contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${anchoBaldosa * 2}px)`;
-    contenedor.innerHTML = "";
+    contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${anchoPx}px)`;
     contenedor.style.position = "relative";
     contenedor.style.width = `${(columnas * anchoPx) + columnas - 1}px`;
     contenedor.style.height = `${(filas * altoPx) + filas - 1}px`;
     contenedor.style.overflow = "hidden";
 
-    for (let y = 0; y < filas; y++) {
-        for (let x = 0; x < columnas; x++) {
-            const div = document.createElement("div");
-            const img = document.createElement("img");
+    // 🪵 MODO MADERA (antes del bucle estándar)
+    if (tipoDisposicion === "madera") {
+        esMadera = true; // 🆕
+        for (let y = 0; y < filas; y++) {
+            const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
+            const desplazamientoPx = desplazamientoFactor * anchoPx;
 
-            // Elegir imagen según tipo
-            let url;
-            if (tipoImagen === "pieza") {
-                url = urlsMosaico[0];
-            } else if (tipoImagen === "varias") {
-                url = urlsMosaico[(x + y * columnas) % urlsMosaico.length];
-            } else if (tipoImagen === "mosaico") {
-                url = urlsMosaico[0];
-            }
+            const columnasFila = desplazamientoFactor > 0 ? columnas + 1 : columnas;
 
-            img.src = url;
-            img.style.width = `${anchoBaldosa * 2}px`;
-            img.style.height = `${altoBaldosa * 2}px`;
-            img.style.objectFit = "cover";
-            img.style.transition = "transform 0.2s ease";
+            let primeraURL = null;
+            let primeraRotacion = null;
 
-            // Rotaciones aleatorias
-            if (tipoDisposicion === "normal") {
-                const grados = Math.random() < 0.5 ? 0 : 180;
-                img.style.transform = `rotate(${grados}deg)`;
-            }
+            for (let x = 0; x < columnasFila; x++) {
+                const img = document.createElement("img");
 
-            if (tipoDisposicion === "cuadrada") {
-                const grados = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
-                img.style.transform = `rotate(${grados}deg)`;
-            }
+                const esUltimaRepetida = (x === columnasFila - 1 && desplazamientoFactor > 0);
+                let url, rotacion;
 
-            if (tipoDisposicion === "patron" && tipoImagen === "pieza") {
-                const g0 = patronGiro === "+90" ? 90 : -90;
-                const g1 = (360 + g0 * 3) % 360;
-                const patrón = [
-                    [0, g0],
-                    [g1, 180]
-                ];
-                const fila = y % 2;
-                const col = x % 2;
-                img.style.transform = `rotate(${patrón[fila][col]}deg)`;
-            }
+                if (esUltimaRepetida && primeraURL !== null) {
+                    url = primeraURL;
+                    rotacion = primeraRotacion;
+                } else {
+                    url = tipoImagen === "pieza"
+                        ? urlsMosaico[0]
+                        : urlsMosaico[(x + y * columnas) % urlsMosaico.length];
 
-            // 🪵 MODO MADERA — reemplaza toda la lógica estándar
-            if (tipoDisposicion === "madera") {
-                for (let y = 0; y < filas; y++) {
-                    const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
-                    const desplazamientoPx = desplazamientoFactor * anchoPx;
+                    rotacion = Math.random() < 0.5 ? 0 : 180;
 
-                    const columnasFila = desplazamientoFactor > 0 ? columnas + 1 : columnas;
-
-                    let primeraURL = null;
-                    let primeraRotacion = null;
-
-                    for (let x = 0; x < columnasFila; x++) {
-                        const img = document.createElement("img");
-
-                        const esUltimaRepetida = (x === columnasFila - 1 && desplazamientoFactor > 0);
-
-                        let url, rotacion;
-
-                        if (esUltimaRepetida && primeraURL !== null) {
-                            url = primeraURL;
-                            rotacion = primeraRotacion;
-                        } else {
-                            url = tipoImagen === "pieza"
-                                ? urlsMosaico[0]
-                                : urlsMosaico[(x + y * columnas) % urlsMosaico.length];
-
-                            rotacion = Math.random() < 0.5 ? 0 : 180;
-
-                            if (x === 0) {
-                                primeraURL = url;
-                                primeraRotacion = rotacion;
-                            }
-                        }
-
-                        img.src = url;
-                        img.style.width = `${anchoPx}px`;
-                        img.style.height = `${altoPx}px`;
-                        img.style.objectFit = "cover";
-                        img.style.position = "absolute";
-                        img.style.transform = `rotate(${rotacion}deg)`;
-
-                        const left = Math.round(x * (anchoPx + 1) - desplazamientoPx);
-                        const top = y * (altoPx + 1);
-
-                        img.style.left = `${left}px`;
-                        img.style.top = `${top}px`;
-
-                        contenedor.appendChild(img);
+                    if (x === 0) {
+                        primeraURL = url;
+                        primeraRotacion = rotacion;
                     }
                 }
 
-                console.log("✅ Mosaico tipo madera generado");
+                img.src = url;
+                img.style.width = `${anchoPx}px`;
+                img.style.height = `${altoPx}px`;
+                img.style.objectFit = "cover";
+                img.style.position = "absolute";
+                img.style.transform = `rotate(${rotacion}deg)`;
 
-                // ⚠️ Interrumpir aquí para no ejecutar la lógica estándar ni duplicar
-                return;
+                const left = Math.round(x * (anchoPx + 1) - desplazamientoPx);
+                const top = y * (altoPx + 1);
+
+                img.style.left = `${left}px`;
+                img.style.top = `${top}px`;
+
+                contenedor.appendChild(img);
             }
-
-
-            div.appendChild(img);
-            contenedor.appendChild(div);
         }
+
+        console.log("✅ Mosaico tipo madera generado");
     }
 
-    console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
+    // 🧱 MODO ESTÁNDAR (si no es madera) 🟡
+    if (!esMadera) {
+        for (let y = 0; y < filas; y++) {
+            for (let x = 0; x < columnas; x++) {
+                const div = document.createElement("div");
+                const img = document.createElement("img");
 
-    // 🌀 Generar y previsualizar el normal map
+                let url;
+                if (tipoImagen === "pieza") {
+                    url = urlsMosaico[0];
+                } else if (tipoImagen === "varias") {
+                    url = urlsMosaico[(x + y * columnas) % urlsMosaico.length];
+                } else if (tipoImagen === "mosaico") {
+                    url = urlsMosaico[0];
+                }
+
+                img.src = url;
+                img.style.width = `${anchoPx}px`;
+                img.style.height = `${altoPx}px`;
+                img.style.objectFit = "cover";
+                img.style.transition = "transform 0.2s ease";
+
+                if (tipoDisposicion === "normal") {
+                    const grados = Math.random() < 0.5 ? 0 : 180;
+                    img.style.transform = `rotate(${grados}deg)`;
+                }
+
+                if (tipoDisposicion === "cuadrada") {
+                    const grados = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
+                    img.style.transform = `rotate(${grados}deg)`;
+                }
+
+                if (tipoDisposicion === "patron" && tipoImagen === "pieza") {
+                    const g0 = patronGiro === "+90" ? 90 : -90;
+                    const g1 = (360 + g0 * 3) % 360;
+                    const patrón = [[0, g0], [g1, 180]];
+                    const fila = y % 2;
+                    const col = x % 2;
+                    img.style.transform = `rotate(${patrón[fila][col]}deg)`;
+                }
+
+                div.appendChild(img);
+                contenedor.appendChild(div);
+            }
+        }
+
+        console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
+    }
+
+    // 🌈 SIEMPRE se ejecuta la generación del normal map
     const tipoNormal = document.getElementById("tipo-normal-map").value;
     console.log("📌 Valor capturado de tipoNormal:", tipoNormal);
     if (tipoNormal) {
@@ -598,7 +593,6 @@ async function generarMosaico() {
         try {
             urlNormalMap = await generarNormalMapDesdeFormulario();
 
-            // Buscar o crear contenedor visual
             let preview = document.getElementById("preview-normalmap");
             if (!preview) {
                 preview = document.createElement("img");
@@ -613,7 +607,7 @@ async function generarMosaico() {
         } catch (error) {
             console.error("❌ Error al generar el normal map:", error);
         }
-    }    
+    }
 }
 
 async function generarNormalMapDesdeFormulario() {
