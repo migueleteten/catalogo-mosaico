@@ -581,6 +581,24 @@ function generarMosaico() {
     console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
 }
 
+function generarNormalMapDesdeFormulario() {
+    const tipoNormal = document.getElementById("tipo-normal-map").value;
+    const disposicion = document.getElementById("tipo-disposicion").value;
+    const ancho = parseFloat(document.getElementById("ancho-baldosa").value);
+    const alto = parseFloat(document.getElementById("alto-baldosa").value);
+
+    if (!tipoNormal || !disposicion || !ancho || !alto) {
+        alert("❌ Faltan datos para generar el normal map");
+        return;
+    }
+
+    google.script.run.withSuccessHandler(function(urlNormalMap) {
+        console.log("✅ Mapa de normales generado:", urlNormalMap);
+        // Aquí podéis mostrarlo, guardarlo en la BD, o asignarlo a un campo oculto
+        alert("Mapa de normales generado y subido con éxito.");
+    }).generarNormalMap(tipoNormal, disposicion, ancho, alto);
+}
+  
 async function capturarRecortesTV() {
     const contenedor = document.getElementById("mosaico-render");
 
