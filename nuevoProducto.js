@@ -72,30 +72,45 @@ async function procesarImagenesArrastradas(event) {
     }
 }
 
-// 📌 7️⃣ Subir imagen a ibb.com con nombre camuflado
 async function subirImagenIbb(imageData, fileName) {
     const apiKey = "3717e2228df458827cb7e06855655ce7";
     const formData = new FormData();
 
     formData.append("key", apiKey);
 
-    // ⚠️ Si viene como base64 con prefijo "data:image/png;base64,..."
     if (imageData.startsWith("data:image")) {
         formData.append("image", imageData.split(",")[1]);
     } else {
-        formData.append("image", imageData); // se asume URL o base64 puro
+        formData.append("image", imageData);
     }
 
     formData.append("name", fileName);
 
-    const response = await fetch("https://api.imgbb.com/1/upload", {
-        method: "POST",
-        body: formData
-    });
+    try {
+        const response = await fetch("https://api.imgbb.com/1/upload", {
+            method: "POST",
+            body: formData
+        });
 
-    const data = await response.json();
-    if (!data.success) throw new Error("Error al subir la imagen");
-    return data.data.url;
+        if (!response.ok) {
+            const text = await response.text(); // obtener texto aunque no sea JSON
+            throw new Error(`❌ Error HTTP ${response.status}: ${response.statusText}\n${text}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error("❌ Error de imgbb:", data);
+            throw new Error("❌ imgbb no aceptó la imagen. Revisa el formato o tamaño.");
+        }
+
+        console.log("✅ Imagen subida correctamente:", data.data.url);
+        return data.data.url;
+
+    } catch (err) {
+        console.error("💥 Error al subir imagen a imgbb:", err);
+        throw err; // vuelve a lanzar para que quien llame pueda capturarlo
+    }
 }
 
 // 🏷️ 8️⃣ Generar nombre camuflado para imágenes
