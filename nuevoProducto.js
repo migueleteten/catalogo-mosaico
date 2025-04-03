@@ -601,7 +601,6 @@ async function generarMosaico() {
                 preview.id = "preview-normalmap";
                 preview.style.marginTop = "30px";
                 preview.style.maxWidth = "100%";
-                preview.style.border = "2px solid #aaa";
                 document.getElementById("mosaico-config").appendChild(preview);
             }
             preview.src = urlNormalMap;
