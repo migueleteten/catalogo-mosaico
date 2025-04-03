@@ -441,6 +441,7 @@ function actualizarOpcionesTipoImagen() {
 }
 
 async function generarMosaico() {
+    console.log("🚀 Se ha pulsado 'Generar Mosaico'");
     const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
     const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
     const anchoPx = anchoBaldosa * 2;
@@ -586,6 +587,7 @@ async function generarMosaico() {
     // 🌀 Generar y previsualizar el normal map
     const tipoNormal = document.getElementById("tipo-normal-map").value;
     if (tipoNormal) {
+        console.log("🌀 Tipo de normal map seleccionado:", tipoNormal);
         try {
             urlNormalMap = await generarNormalMapDesdeFormulario();
 
@@ -609,6 +611,7 @@ async function generarMosaico() {
 }
 
 async function generarNormalMapDesdeFormulario() {
+    console.log("📡 Llamando a google.script.run.obtenerNormalMapBlob...");
     const tipoNormal = document.getElementById("tipo-normal-map").value;
     const disposicion = document.getElementById("tipo-disposicion").value;
     const ancho = parseFloat(document.getElementById("ancho-baldosa").value);
@@ -634,7 +637,12 @@ async function generarNormalMapDesdeFormulario() {
                 }
             };
             reader.readAsDataURL(blob);
-        }).obtenerNormalMapBlob(tipoNormal, disposicion, ancho, alto);
+        })        
+        .withFailureHandler(error => {
+            console.error("❌ Error al llamar a obtenerNormalMapBlob:", error);
+            reject(error);
+        })
+        .obtenerNormalMapBlob(tipoNormal, disposicion, ancho, alto);
     });
 }
 
