@@ -626,13 +626,6 @@ async function generarNormalMapDesdeFormulario() {
                 const url = await subirImagenIbb(dataUrl, generarNombreImagen());
                 resolve(url);
 
-                // Previsualización opcional
-                const preview = document.createElement("img");
-                preview.src = url;
-                preview.style.maxWidth = "100%";
-                preview.style.marginTop = "20px";
-                document.getElementById("mosaico-config").appendChild(preview);
-
             } catch (error) {
                 console.error("❌ Error al subir normal map:", error);
                 reject(error);
