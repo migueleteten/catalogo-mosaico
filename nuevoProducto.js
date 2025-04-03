@@ -11,6 +11,8 @@ function cargarTiposProductos() {
     }).obtenerTiposProductos();
 }
 
+let urlNormalMap = "";
+
 function habilitarImagenes() {
     let codigo = document.getElementById("codigo").value.trim();
     document.getElementById("image-url").disabled = codigo === "";
@@ -226,7 +228,6 @@ async function registrarProducto() {
 
     // Subida opcional del mosaico y recortes
     let urlsMosaico = null;
-    let urlNormalMap = "";
     const mosaicoActivado = document.getElementById("activar-mosaico").checked;
     const codigoProducto = document.getElementById("codigo").value.trim();
 
@@ -237,10 +238,9 @@ async function registrarProducto() {
                 alert("❌ Falló la subida del mosaico. No se puede registrar el producto.");
                 return;
             }
-            urlNormalMap = await generarNormalMapDesdeFormulario();
         } catch (error) {
             console.error("❌ Error subiendo mosaico:", error);
-            alert("❌ Falló la subida del mosaico o de algún mapa de textura.");
+            alert("❌ Falló la subida del mosaico.");
             return;
         }
     }
@@ -440,7 +440,7 @@ function actualizarOpcionesTipoImagen() {
     actualizarOpcionesDisposicion();
 }
 
-function generarMosaico() {
+async function generarMosaico() {
     const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
     const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
     const anchoPx = anchoBaldosa * 2;
@@ -582,6 +582,30 @@ function generarMosaico() {
     }
 
     console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
+
+    // 🌀 Generar y previsualizar el normal map
+    const tipoNormal = document.getElementById("tipo-normal-map").value;
+    if (tipoNormal) {
+        try {
+            urlNormalMap = await generarNormalMapDesdeFormulario();
+
+            // Buscar o crear contenedor visual
+            let preview = document.getElementById("preview-normalmap");
+            if (!preview) {
+                preview = document.createElement("img");
+                preview.id = "preview-normalmap";
+                preview.style.marginTop = "30px";
+                preview.style.maxWidth = "100%";
+                preview.style.border = "2px solid #aaa";
+                document.getElementById("mosaico-config").appendChild(preview);
+            }
+            preview.src = urlNormalMap;
+            console.log("🌈 Normal map generado y previsualizado");
+
+        } catch (error) {
+            console.error("❌ Error al generar el normal map:", error);
+        }
+    }    
 }
 
 async function generarNormalMapDesdeFormulario() {
