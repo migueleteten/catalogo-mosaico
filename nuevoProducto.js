@@ -226,6 +226,7 @@ async function registrarProducto() {
 
     // Subida opcional del mosaico y recortes
     let urlsMosaico = null;
+    let urlNormalMap = "";
     const mosaicoActivado = document.getElementById("activar-mosaico").checked;
     const codigoProducto = document.getElementById("codigo").value.trim();
 
@@ -236,9 +237,10 @@ async function registrarProducto() {
                 alert("❌ Falló la subida del mosaico. No se puede registrar el producto.");
                 return;
             }
+            urlNormalMap = await generarNormalMapDesdeFormulario();
         } catch (error) {
             console.error("❌ Error subiendo mosaico:", error);
-            alert("❌ Falló la subida del mosaico.");
+            alert("❌ Falló la subida del mosaico o de algún mapa de textura.");
             return;
         }
     }
@@ -273,7 +275,8 @@ async function registrarProducto() {
                   TV65: urlsMosaico.TV65,
                   TV75: urlsMosaico.TV75
               })
-            : ""
+            : "",
+        urlNormalMap: urlNormalMap
     };
 
     console.log("📤 Enviando producto a Apps Script:", formData);
@@ -581,24 +584,36 @@ function generarMosaico() {
     console.log("✅ Mosaico generado:", { tipoImagen, tipoDisposicion, filas, cols: columnas });
 }
 
-function generarNormalMapDesdeFormulario() {
+async function generarNormalMapDesdeFormulario() {
     const tipoNormal = document.getElementById("tipo-normal-map").value;
     const disposicion = document.getElementById("tipo-disposicion").value;
     const ancho = parseFloat(document.getElementById("ancho-baldosa").value);
     const alto = parseFloat(document.getElementById("alto-baldosa").value);
 
-    if (!tipoNormal || !disposicion || !ancho || !alto) {
-        alert("❌ Faltan datos para generar el normal map");
-        return;
-    }
+    return new Promise((resolve, reject) => {
+        google.script.run.withSuccessHandler(blob => {
+            const reader = new FileReader();
+            reader.onloadend = async function () {
+                try {
+                    const base64data = reader.result.split(",")[1];
+                    const url = await subirImagenIbb("data:image/png;base64," + base64data, generarNombreImagen());
+                    resolve(url); // ← Devuelve la URL del normal map
+                    const preview = document.createElement("img");
+                    preview.src = url;
+                    preview.style.maxWidth = "100%";
+                    preview.style.marginTop = "20px";
+                    document.getElementById("mosaico-config").appendChild(preview);
 
-    google.script.run.withSuccessHandler(function(urlNormalMap) {
-        console.log("✅ Mapa de normales generado:", urlNormalMap);
-        // Aquí podéis mostrarlo, guardarlo en la BD, o asignarlo a un campo oculto
-        alert("Mapa de normales generado y subido con éxito.");
-    }).generarNormalMap(tipoNormal, disposicion, ancho, alto);
+                } catch (error) {
+                    console.error("❌ Error al subir normal map:", error);
+                    reject(error);
+                }
+            };
+            reader.readAsDataURL(blob);
+        }).obtenerNormalMapBlob(tipoNormal, disposicion, ancho, alto);
+    });
 }
-  
+
 async function capturarRecortesTV() {
     const contenedor = document.getElementById("mosaico-render");
 
