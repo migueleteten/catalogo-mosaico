@@ -457,11 +457,13 @@ async function generarMosaico() {
     contenedor.innerHTML = ""; // Limpiar anterior
 
     if (!urlsMosaico.length) {
+        console.warn("⚠️ No hay imágenes en urlsMosaico:", urlsMosaico);
         alert("❌ Debes añadir al menos una imagen.");
         return;
     }
 
     if (tipoImagen === "mosaico" && (repX === 0 || repY === 0)) {
+        console.warn("⚠️ Repeticiones inválidas:", { repX, repY });
         alert("❌ Debes indicar el número de repeticiones.");
         return;
     }
@@ -525,9 +527,8 @@ async function generarMosaico() {
 
             // MODO MADERA con desplazamientos 1/3 y 2/3 y ajuste de columnas
             if (tipoDisposicion === "madera") {
-
-                for (let y = 0; y < filas; y++) {
-                    const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
+                for (let yy = 0; yy < filas; yy++) {
+                    const desplazamientoFactor = (yy % 3 === 1) ? 1 / 3 : (yy % 3 === 2) ? 2 / 3 : 0;
                     const desplazamientoPx = desplazamientoFactor * anchoPx;
             
                     const columnasFila = desplazamientoFactor > 0 ? columnas + 1 : columnas;
@@ -535,10 +536,10 @@ async function generarMosaico() {
                     let primeraURL = null;
                     let primeraRotacion = null;
             
-                    for (let x = 0; x < columnasFila; x++) {
+                    for (let xx = 0; xx < columnasFila; xx++) {
                         const img = document.createElement("img");
             
-                        const esUltimaRepetida = (x === columnasFila - 1 && desplazamientoFactor > 0);
+                        const esUltimaRepetida = (xx === columnasFila - 1 && desplazamientoFactor > 0);
             
                         let url, rotacion;
             
@@ -548,11 +549,11 @@ async function generarMosaico() {
                         } else {
                             url = tipoImagen === "pieza"
                                 ? urlsMosaico[0]
-                                : urlsMosaico[(x + y * columnas) % urlsMosaico.length];
+                                : urlsMosaico[(xx + yy * columnas) % urlsMosaico.length];
             
                             rotacion = Math.random() < 0.5 ? 0 : 180;
             
-                            if (x === 0) {
+                            if (xx === 0) {
                                 primeraURL = url;
                                 primeraRotacion = rotacion;
                             }
@@ -565,8 +566,8 @@ async function generarMosaico() {
                         img.style.position = "absolute";
                         img.style.transform = `rotate(${rotacion}deg)`;
             
-                        const left = Math.round(x * (anchoPx + 1) - desplazamientoPx);
-                        const top = y * (altoPx + 1);
+                        const left = Math.round(xx * (anchoPx + 1) - desplazamientoPx);
+                        const top = yy * (altoPx + 1);
             
                         img.style.left = `${left}px`;
                         img.style.top = `${top}px`;
@@ -575,6 +576,7 @@ async function generarMosaico() {
                     }
                 }
             
+                console.log("✅ Mosaico tipo madera generado");
                 return;
             }
 
