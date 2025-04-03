@@ -614,38 +614,30 @@ async function generarMosaico() {
 }
 
 async function generarNormalMapDesdeFormulario() {
-    console.log("📡 Llamando a google.script.run.obtenerNormalMapBlob...");
     const tipoNormal = document.getElementById("tipo-normal-map").value;
     const disposicion = document.getElementById("tipo-disposicion").value;
     const ancho = parseFloat(document.getElementById("ancho-baldosa").value);
     const alto = parseFloat(document.getElementById("alto-baldosa").value);
 
     return new Promise((resolve, reject) => {
-        google.script.run.withSuccessHandler(blob => {
-            const reader = new FileReader();
-            reader.onloadend = async function () {
-                try {
-                    const base64data = reader.result.split(",")[1];
-                    const url = await subirImagenIbb("data:image/png;base64," + base64data, generarNombreImagen());
-                    resolve(url); // ← Devuelve la URL del normal map
-                    const preview = document.createElement("img");
-                    preview.src = url;
-                    preview.style.maxWidth = "100%";
-                    preview.style.marginTop = "20px";
-                    document.getElementById("mosaico-config").appendChild(preview);
+        google.script.run.withSuccessHandler(async base64 => {
+            try {
+                const dataUrl = "data:image/png;base64," + base64;
+                const url = await subirImagenIbb(dataUrl, generarNombreImagen());
+                resolve(url);
 
-                } catch (error) {
-                    console.error("❌ Error al subir normal map:", error);
-                    reject(error);
-                }
-            };
-            reader.readAsDataURL(blob);
-        })        
-        .withFailureHandler(error => {
-            console.error("❌ Error al llamar a obtenerNormalMapBlob:", error);
-            reject(error);
-        })
-        .obtenerNormalMapBlob(tipoNormal, disposicion, ancho, alto);
+                // Previsualización opcional
+                const preview = document.createElement("img");
+                preview.src = url;
+                preview.style.maxWidth = "100%";
+                preview.style.marginTop = "20px";
+                document.getElementById("mosaico-config").appendChild(preview);
+
+            } catch (error) {
+                console.error("❌ Error al subir normal map:", error);
+                reject(error);
+            }
+        }).obtenerNormalMapBlob(tipoNormal, disposicion, ancho, alto);
     });
 }
 
