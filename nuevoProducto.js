@@ -442,6 +442,8 @@ function actualizarOpcionesTipoImagen() {
 
 async function generarMosaico() {
     console.log("🚀 Se ha pulsado 'Generar Mosaico'");
+    console.log("🔍 ¿Existe el select?", document.getElementById("tipo-normal-map"));
+    console.log("📌 Valor capturado de tipoNormal:", tipoNormal);
     const anchoBaldosa = parseInt(document.getElementById("ancho-baldosa").value);
     const altoBaldosa = parseInt(document.getElementById("alto-baldosa").value);
     const anchoPx = anchoBaldosa * 2;
