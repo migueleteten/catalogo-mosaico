@@ -525,59 +525,63 @@ async function generarMosaico() {
                 img.style.transform = `rotate(${patrón[fila][col]}deg)`;
             }
 
-            // MODO MADERA con desplazamientos 1/3 y 2/3 y ajuste de columnas
+            // 🪵 MODO MADERA — reemplaza toda la lógica estándar
             if (tipoDisposicion === "madera") {
-                for (let yy = 0; yy < filas; yy++) {
-                    const desplazamientoFactor = (yy % 3 === 1) ? 1 / 3 : (yy % 3 === 2) ? 2 / 3 : 0;
+                for (let y = 0; y < filas; y++) {
+                    const desplazamientoFactor = (y % 3 === 1) ? 1 / 3 : (y % 3 === 2) ? 2 / 3 : 0;
                     const desplazamientoPx = desplazamientoFactor * anchoPx;
-            
+
                     const columnasFila = desplazamientoFactor > 0 ? columnas + 1 : columnas;
-            
+
                     let primeraURL = null;
                     let primeraRotacion = null;
-            
-                    for (let xx = 0; xx < columnasFila; xx++) {
+
+                    for (let x = 0; x < columnasFila; x++) {
                         const img = document.createElement("img");
-            
-                        const esUltimaRepetida = (xx === columnasFila - 1 && desplazamientoFactor > 0);
-            
+
+                        const esUltimaRepetida = (x === columnasFila - 1 && desplazamientoFactor > 0);
+
                         let url, rotacion;
-            
+
                         if (esUltimaRepetida && primeraURL !== null) {
                             url = primeraURL;
                             rotacion = primeraRotacion;
                         } else {
                             url = tipoImagen === "pieza"
                                 ? urlsMosaico[0]
-                                : urlsMosaico[(xx + yy * columnas) % urlsMosaico.length];
-            
+                                : urlsMosaico[(x + y * columnas) % urlsMosaico.length];
+
                             rotacion = Math.random() < 0.5 ? 0 : 180;
-            
-                            if (xx === 0) {
+
+                            if (x === 0) {
                                 primeraURL = url;
                                 primeraRotacion = rotacion;
                             }
                         }
-            
+
                         img.src = url;
                         img.style.width = `${anchoPx}px`;
                         img.style.height = `${altoPx}px`;
                         img.style.objectFit = "cover";
                         img.style.position = "absolute";
                         img.style.transform = `rotate(${rotacion}deg)`;
-            
-                        const left = Math.round(xx * (anchoPx + 1) - desplazamientoPx);
-                        const top = yy * (altoPx + 1);
-            
+
+                        const left = Math.round(x * (anchoPx + 1) - desplazamientoPx);
+                        const top = y * (altoPx + 1);
+
                         img.style.left = `${left}px`;
                         img.style.top = `${top}px`;
-            
+
                         contenedor.appendChild(img);
                     }
                 }
-            
+
                 console.log("✅ Mosaico tipo madera generado");
+
+                // ⚠️ Interrumpir aquí para no ejecutar la lógica estándar ni duplicar
+                return;
             }
+
 
             div.appendChild(img);
             contenedor.appendChild(div);
