@@ -743,7 +743,7 @@ document.getElementById("marca").addEventListener("change", () => {
 
         productosMarcaActual = productos; // ✅ Aquí dentro, cuando ya han llegado
 
-        const datalist = document.getElementById("codigos");
+        const datalist = document.getElementById("codigos-producto");
         datalist.innerHTML = "";
 
         productos.forEach(p => {
