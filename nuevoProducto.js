@@ -724,16 +724,17 @@ async function subirRecortesTVYGuardar(codigoProducto) {
     return urlsSubidas;
 }
 
-document.getElementById("marca").addEventListener("change", async () => {
+document.getElementById("marca").addEventListener("change", () => {
     const marca = document.getElementById("marca").value.trim();
     if (!marca) return;
 
-    const nombreFormateado = formatearNombreMarca(marca);
-    const url = `https://your-netlify-or-vercel-url/${nombreFormateado}.json`;
-
-    try {
-        const response = await fetch(url);
-        const productos = await response.json();
+    // Llama al backend para obtener todos los códigos de esa marca
+    google.script.run.withSuccessHandler(productos => {
+        if (!Array.isArray(productos)) {
+            console.error("❌ Respuesta inesperada:", productos);
+            alert("No se pudo cargar el listado de productos de esta marca.");
+            return;
+        }
 
         const datalist = document.getElementById("codigos");
         datalist.innerHTML = "";
@@ -745,10 +746,8 @@ document.getElementById("marca").addEventListener("change", async () => {
         });
 
         console.log(`✅ Códigos cargados para ${marca}: ${productos.length}`);
-    } catch (error) {
-        console.error("❌ Error al cargar productos:", error);
-        alert("Error al cargar los productos de esta marca.");
-    }
+        habilitarImagenes(); // Habilitar carga de imágenes tras selección
+    }).getTodosLosCodigosDesdeJSON(marca); // 🆕 Esta función debe devolver el array completo de productos
 });
 
 function formatearNombreMarca(nombre) {
