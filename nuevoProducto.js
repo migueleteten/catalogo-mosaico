@@ -724,5 +724,71 @@ async function subirRecortesTVYGuardar(codigoProducto) {
     return urlsSubidas;
 }
 
+document.getElementById("marca").addEventListener("change", async () => {
+    const marca = document.getElementById("marca").value.trim();
+    if (!marca) return;
+
+    const nombreFormateado = formatearNombreMarca(marca);
+    const url = `https://your-netlify-or-vercel-url/${nombreFormateado}.json`;
+
+    try {
+        const response = await fetch(url);
+        const productos = await response.json();
+
+        const datalist = document.getElementById("codigos");
+        datalist.innerHTML = "";
+
+        productos.forEach(p => {
+            const option = document.createElement("option");
+            option.value = p.codigo;
+            datalist.appendChild(option);
+        });
+
+        console.log(`✅ Códigos cargados para ${marca}: ${productos.length}`);
+    } catch (error) {
+        console.error("❌ Error al cargar productos:", error);
+        alert("Error al cargar los productos de esta marca.");
+    }
+});
+
+function formatearNombreMarca(nombre) {
+    return nombre
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "_");
+}
+
+async function alSeleccionarCodigo() {
+    const marca = document.getElementById("marca").value.trim();
+    const codigo = document.getElementById("codigo").value.trim();
+
+    if (!marca || !codigo) return;
+
+    try {
+        google.script.run
+            .withSuccessHandler(datos => {
+                if (datos.error) {
+                    alert(datos.error);
+                    return;
+                }
+
+                document.getElementById("producto").value = datos.nombre || "";
+                document.getElementById("pvp").value = datos.precio || 0;
+                document.getElementById("dto").value = datos.dto * 100 || 0;
+
+                // Desactivar campos
+                document.getElementById("producto").disabled = true;
+                document.getElementById("pvp").disabled = true;
+                document.getElementById("dto").disabled = true;
+
+                habilitarImagenes(); // ✅ Para seguir el flujo de imagenes
+            })
+            .getProductoPorCodigoDesdeJSON(marca, codigo);
+    } catch (error) {
+        console.error("❌ Error al recuperar producto:", error);
+        alert("Error al recuperar los datos del producto.");
+    }
+}
+
 cargarTiposProductos();
 cargarMarcas();
