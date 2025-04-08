@@ -313,18 +313,21 @@ async function registrarProducto() {
     }).guardarProducto(formData);
 }
 
-// 🟢 Cargar las marcas al abrir el modal
+let todasLasMarcas = []; // 🔄 Para acceso desde alSeleccionarCodigo
+
 function cargarMarcas() {
     google.script.run.withSuccessHandler(function(marcas) {
-        let datalist = document.getElementById("marcas");
-        datalist.innerHTML = ""; // Borrar valores anteriores
+        todasLasMarcas = marcas; // 🆗 Guardamos todas las marcas
+
+        const datalist = document.getElementById("marcas");
+        datalist.innerHTML = "";
 
         marcas.forEach(marca => {
             let option = document.createElement("option");
-            option.value = marca;
+            option.value = marca.nombre;
             datalist.appendChild(option);
         });
-    }).obtenerMarcas();
+    }).obtenerMarcasNuevoProducto();
 }
 
 function toggleNombreAlternativo() {
@@ -724,6 +727,8 @@ async function subirRecortesTVYGuardar(codigoProducto) {
     return urlsSubidas;
 }
 
+let productosMarcaActual = [];
+
 document.getElementById("marca").addEventListener("change", () => {
     const marca = document.getElementById("marca").value.trim();
     if (!marca) return;
@@ -736,6 +741,8 @@ document.getElementById("marca").addEventListener("change", () => {
             return;
         }
 
+        productosMarcaActual = productos; // ✅ Aquí dentro, cuando ya han llegado
+
         const datalist = document.getElementById("codigos");
         datalist.innerHTML = "";
 
@@ -746,7 +753,6 @@ document.getElementById("marca").addEventListener("change", () => {
         });
 
         console.log(`✅ Códigos cargados para ${marca}: ${productos.length}`);
-        habilitarImagenes(); // Habilitar carga de imágenes tras selección
     }).getTodosLosCodigosDesdeJSON(marca); // 🆕 Esta función debe devolver el array completo de productos
 });
 
@@ -758,35 +764,37 @@ function formatearNombreMarca(nombre) {
 }
 
 async function alSeleccionarCodigo() {
-    const marca = document.getElementById("marca").value.trim();
     const codigo = document.getElementById("codigo").value.trim();
+    if (!codigo || !productosMarcaActual.length) return;
 
-    if (!marca || !codigo) return;
-
-    try {
-        google.script.run
-            .withSuccessHandler(datos => {
-                if (datos.error) {
-                    alert(datos.error);
-                    return;
-                }
-
-                document.getElementById("producto").value = datos.nombre || "";
-                document.getElementById("pvp").value = datos.precio || 0;
-                document.getElementById("dto").value = datos.dto * 100 || 0;
-
-                // Desactivar campos
-                document.getElementById("producto").disabled = true;
-                document.getElementById("pvp").disabled = true;
-                document.getElementById("dto").disabled = true;
-
-                habilitarImagenes(); // ✅ Para seguir el flujo de imagenes
-            })
-            .getProductoPorCodigoDesdeJSON(marca, codigo);
-    } catch (error) {
-        console.error("❌ Error al recuperar producto:", error);
-        alert("Error al recuperar los datos del producto.");
+    const producto = productosMarcaActual.find(p => String(p.codigo).trim() === codigo);
+    if (!producto) {
+        alert("❌ Código no encontrado en los productos cargados.");
+        return;
     }
+
+    const marca = document.getElementById("marca").value.trim();
+    const filaMarca = todasLasMarcas.find(m => m.nombre === marca);
+    if (!filaMarca) {
+        alert("❌ No se encontró información de la marca.");
+        return;
+    }
+
+    const multiplicador = parseFloat(filaMarca.multiplicador) || 1;
+    const dto = parseFloat(filaMarca.dto) || 0;
+
+    const precioBase = parseFloat(producto.precio) || 0;
+    const precioFinal = Math.round(precioBase * multiplicador * 100) / 100;
+
+    document.getElementById("producto").value = producto.nombre || "";
+    document.getElementById("pvp").value = precioFinal;
+    document.getElementById("dto").value = dto * 100;
+
+    document.getElementById("producto").disabled = true;
+    document.getElementById("pvp").disabled = true;
+    document.getElementById("dto").disabled = true;
+
+    habilitarImagenes();
 }
 
 cargarTiposProductos();
