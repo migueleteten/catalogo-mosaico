@@ -748,7 +748,8 @@ document.getElementById("marca").addEventListener("change", () => {
 
         productos.forEach(p => {
             const option = document.createElement("option");
-            option.value = `${p.codigo} - ${p.nombre}`;
+            option.value = p.codigo
+            option.label = `${p.codigo} - ${p.nombre}`;
             datalist.appendChild(option);
         });
 
