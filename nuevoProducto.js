@@ -757,6 +757,17 @@ document.getElementById("marca").addEventListener("change", () => {
     }).getTodosLosCodigosDesdeJSON(marca); // 🆕 Esta función debe devolver el array completo de productos
 });
 
+document.getElementById("codigo").addEventListener("change", () => {
+    const codigoInput = document.getElementById("codigo").value.trim();
+    const existe = productosMarcaActual.some(p => String(p.codigo).trim() === codigoInput);
+    if (existe) {
+        alSeleccionarCodigo();
+    } else {
+        // No hacemos nada. Esperamos a que escriba bien.
+        console.log("⏳ Código incompleto o no encontrado aún...");
+    }
+});
+
 function formatearNombreMarca(nombre) {
     return nombre
         .toLowerCase()
@@ -770,9 +781,7 @@ async function alSeleccionarCodigo() {
 
     const producto = productosMarcaActual.find(p => String(p.codigo).trim() === codigo);
     if (!producto) {
-        if (codigo.length >= 6) {
-            alert("❌ Código no encontrado en los productos cargados.");
-        }
+        alert("❌ Código no encontrado en los productos cargados.");
         return;
     }
 
