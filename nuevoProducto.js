@@ -770,7 +770,9 @@ async function alSeleccionarCodigo() {
 
     const producto = productosMarcaActual.find(p => String(p.codigo).trim() === codigo);
     if (!producto) {
-        alert("❌ Código no encontrado en los productos cargados.");
+        if (codigo.length >= 6) {
+            alert("❌ Código no encontrado en los productos cargados.");
+        }
         return;
     }
 
